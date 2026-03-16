@@ -21,22 +21,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
-        const participantsHTML = details.participants.length
-          ? `<div class="participants"><strong>Participants:</strong><ul class="participants-list">${details.participants
-              .map(
-                (participant) =>
-                  `<li><span class="participant-name">${participant}</span><button class="participant-remove" data-activity="${name}" data-email="${participant}" aria-label="Remove ${participant}">✖</button></li>`
-              )
-              .join("")}</ul></div>`
-          : `<p class="participants-none"><strong>Participants:</strong> None yet</p>`;
-
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          ${participantsHTML}
         `;
+
+        // Build participants section using DOM APIs to prevent XSS
+        const participantsContainer = document.createElement("div");
+        if (details.participants.length) {
+          participantsContainer.className = "participants";
+          const label = document.createElement("strong");
+          label.textContent = "Participants:";
+          participantsContainer.appendChild(label);
+          const ul = document.createElement("ul");
+          ul.className = "participants-list";
+          details.participants.forEach((participant) => {
+            const li = document.createElement("li");
+            const span = document.createElement("span");
+            span.className = "participant-name";
+            span.textContent = participant;
+            const btn = document.createElement("button");
+            btn.className = "participant-remove";
+            btn.dataset.activity = name;
+            btn.dataset.email = participant;
+            btn.setAttribute("aria-label", `Remove ${participant}`);
+            btn.textContent = "✖";
+            li.appendChild(span);
+            li.appendChild(btn);
+            ul.appendChild(li);
+          });
+          participantsContainer.appendChild(ul);
+        } else {
+          participantsContainer.className = "participants-none";
+          const label = document.createElement("strong");
+          label.textContent = "Participants:";
+          participantsContainer.appendChild(label);
+          participantsContainer.appendChild(document.createTextNode(" None yet"));
+        }
+        activityCard.appendChild(participantsContainer);
 
         activitiesList.appendChild(activityCard);
 
@@ -73,6 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh list so participants and availability stay in sync
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";

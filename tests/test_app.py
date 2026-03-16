@@ -1,6 +1,6 @@
 """Tests for the FastAPI backend application."""
 
-import pytest
+from urllib.parse import quote
 
 
 def test_get_activities(client):
@@ -15,7 +15,7 @@ def test_get_activities(client):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, dict)
-    assert "basketball" in data
+    assert "Basketball Team" in data
     assert "Chess Club" in data
     # Check that Chess Club has the expected structure
     chess_club = data["Chess Club"]
@@ -28,11 +28,11 @@ def test_get_activities(client):
 def test_signup_for_activity_success(client):
     """Test successful signup for an activity."""
     # Arrange
-    activity_name = "basketball"
+    activity_name = "Basketball Team"
     email = "test@example.com"
 
     # Act
-    response = client.post(f"/activities/{activity_name}/signup?email={email}")
+    response = client.post(f"/activities/{quote(activity_name)}/signup?email={email}")
 
     # Assert
     assert response.status_code == 200
@@ -45,13 +45,13 @@ def test_signup_for_activity_success(client):
 def test_signup_for_activity_duplicate(client):
     """Test signup fails when student is already signed up."""
     # Arrange
-    activity_name = "tennis"
+    activity_name = "Tennis Club"
     email = "duplicate@example.com"
     # First signup
-    client.post(f"/activities/{activity_name}/signup?email={email}")
+    client.post(f"/activities/{quote(activity_name)}/signup?email={email}")
 
     # Act - try to signup again
-    response = client.post(f"/activities/{activity_name}/signup?email={email}")
+    response = client.post(f"/activities/{quote(activity_name)}/signup?email={email}")
 
     # Assert
     assert response.status_code == 400
@@ -79,13 +79,13 @@ def test_signup_for_activity_not_found(client):
 def test_remove_participant_success(client):
     """Test successful removal of a participant."""
     # Arrange
-    activity_name = "painting"
+    activity_name = "Painting Class"
     email = "remove@example.com"
     # First signup
-    client.post(f"/activities/{activity_name}/signup?email={email}")
+    client.post(f"/activities/{quote(activity_name)}/signup?email={email}")
 
     # Act
-    response = client.delete(f"/activities/{activity_name}/participants?email={email}")
+    response = client.delete(f"/activities/{quote(activity_name)}/participants?email={email}")
 
     # Assert
     assert response.status_code == 200
@@ -98,11 +98,11 @@ def test_remove_participant_success(client):
 def test_remove_participant_not_signed_up(client):
     """Test removal fails when participant is not signed up."""
     # Arrange
-    activity_name = "sculpture"
+    activity_name = "Sculpture Workshop"
     email = "notsigned@example.com"
 
     # Act
-    response = client.delete(f"/activities/{activity_name}/participants?email={email}")
+    response = client.delete(f"/activities/{quote(activity_name)}/participants?email={email}")
 
     # Assert
     assert response.status_code == 404

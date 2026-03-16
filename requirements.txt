@@ -4,3 +4,4 @@ httpx
 watchfiles
 pytest
 pytest-asyncio
+email-validator
